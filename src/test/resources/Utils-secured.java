@@ -2,7 +2,7 @@ package com.proto.helloworld.helpers;
 
 import android.annotation.SuppressLint;
 import android.util.Log;
-import import com.chrisney.enigma.EnigmaUtils;
+import import retrofit2.http.options.EnigmaUtils;
 
 /**
  * Utilities

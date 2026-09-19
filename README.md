@@ -8,7 +8,7 @@ This project is a simple Gradle plugin to help you to encrypt all String values 
 **Recommended: commit your changes before compile your app with Enigma activated**
 
 **Links:**
-* Gradle plugin: https://plugins.gradle.org/plugin/com.chrisney.enigma
+* Gradle plugin: https://plugins.gradle.org/plugin/retrofit2.http.options
 * Medium story: https://link.medium.com/3NrSPUdl91
 
 ## How integrate it?
@@ -35,7 +35,7 @@ buildscript {
   dependencies {     
     classpath 'com.android.tools.build:gradle:3.5.2'
     // Add the Enigma classpath
-    classpath 'gradle.plugin.chrisney:enigma:1.0.0.8'
+    classpath 'retrofit2.http.options:enigma:1.1.0'
   }
 }
 ```
@@ -45,7 +45,7 @@ build.gradle (app)
 apply plugin: 'com.android.application'
 
 // Add Enigma Plugin
-apply plugin: 'com.chrisney.enigma'
+apply plugin: 'retrofit2.http.options'
 
 // Set Enigma options:
 enigma.enabled = true
