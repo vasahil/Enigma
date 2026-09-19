@@ -210,12 +210,40 @@ class UnitTests {
             keywords = setOf("lowercase", "trim")
         )
 
+        src.lines().forEachIndexed { i, line ->
+            println("${i + 1}: $line")
+        }
+
         Assert.assertTrue(src.contains("package kotlinx.coroutines.flow"))
         Assert.assertTrue(src.contains("fun String.lowercase(): String"))
         Assert.assertTrue(src.contains("fun String.trim(): String"))
         Assert.assertTrue(src.contains("private object companion"))
         Assert.assertTrue(src.contains("fun subSequence(): Map<String, String>"))
         Assert.assertTrue(src.contains("fun index(): Map<String, String>"))
+    }
+
+    @Test
+    fun testRuntimeMaskDecryptionRoundtrip() {
+        val profile = "androidx.lifecycle.flow"
+        val salt = MaskUtils.DEFAULT_SALT
+        val testData = listOf("", "Hello World", "http://example.com/api", "Special !@#$%\n\t\"'")
+
+        for (plain in testData) {
+            val token = MaskUtils.encryptToken(profile, salt, plain)
+            val parts = token.split(":")
+            Assert.assertEquals(2, parts.size)
+
+            val iv = MaskUtils.fromHex(parts[0])
+            val ct = MaskUtils.fromHex(parts[1])
+            val saltBytes = MaskUtils.fromHex(salt)
+
+            val key = MaskUtils.deriveKey(profile, saltBytes)
+            val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding")
+            cipher.init(javax.crypto.Cipher.DECRYPT_MODE, key, javax.crypto.spec.GCMParameterSpec(128, iv))
+            val decrypted = cipher.doFinal(ct)
+            val result = String(decrypted, Charsets.UTF_8)
+            Assert.assertEquals(plain, result)
+        }
     }
 
     @Test
