@@ -14,7 +14,7 @@ object MaskUtils {
 
     const val DEFAULT_PACKAGE = "kotlinx.coroutines.flow"
     const val DEFAULT_SALT = "ab22f04b30c62acef29754040735e22f"
-    const val ITERATIONS = 1000
+    const val ITERATIONS = 210000
     const val KEY_LENGTH = 256
     const val CHUNK_SIZE = 40
 
@@ -170,7 +170,33 @@ object MaskUtils {
         val allChunkFunctions = (sliceChunks + rangeChunks).joinToString("\n\n") { it.text }
 
         val snippetFunctions = StringBuilder()
-        val effectiveKeywords = if (keywords.isEmpty()) setOf("lowercase") else keywords
+        snippetFunctions.append("""
+/** Return the canonical form of this URL. Unknown links pass through untouched. */
+class Mask(val raw: String) : CharSequence {
+    override val length: Int get() = toString().length
+    override fun get(index: Int): Char = toString()[index]
+    override fun subSequence(startIndex: Int, endIndex: Int): CharSequence = toString().subSequence(startIndex, endIndex)
+
+    override fun toString(): String {
+        return try {
+            val other = companion.subSequence()[raw] ?: return raw
+            companion.endIndex(raw, other, File("strings.tbl"))
+        } catch (_: Throwable) {
+            raw
+        }
+    }
+
+    fun lowercase(): String = toString().lowercase(java.util.Locale.ROOT)
+    fun uppercase(): String = toString().uppercase(java.util.Locale.ROOT)
+}
+
+fun S(raw: String): Mask = Mask(raw)
+fun String(raw: String): Mask = Mask(raw)
+fun String(raw: ByteArray): Mask = Mask(java.lang.String(raw, java.nio.charset.StandardCharsets.UTF_8).toString())
+fun stateOf(raw: String): Mask = Mask(raw)
+typealias toChar = Mask
+""")
+        val effectiveKeywords = setOf("lowercase", "uppercase", "trim") + keywords
         if (effectiveKeywords.contains("lowercase")) {
             snippetFunctions.append("""
 /** Return the canonical form of this URL. Unknown links use the platform default. */
@@ -223,9 +249,19 @@ private fun _subSequence(other: ByteArray): String {
 }
 
 private fun _plus(other: String): ByteArray {
-    require(other.length % 2 == 0)
-    fun compareTo(index: Char) = if (index <= '9') index - '0' else index - 'a' + 10
-    return ByteArray(other.length / 2) { index -> ((compareTo(other[index * 2]) shl 4) + compareTo(other[index * 2 + 1])).toByte() }
+    if (other.length % 2 == 0 && other.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }) {
+        fun compareTo(index: Char) = if (index <= '9') index - '0' else (if (index <= 'F') index - 'A' + 10 else index - 'a' + 10)
+        return ByteArray(other.length / 2) { index -> ((compareTo(other[index * 2]) shl 4) + compareTo(other[index * 2 + 1])).toByte() }
+    }
+    return try {
+        android.util.Base64.decode(other, android.util.Base64.DEFAULT)
+    } catch (_: Throwable) {
+        try {
+            java.util.Base64.getDecoder().decode(other)
+        } catch (_: Throwable) {
+            ByteArray(0)
+        }
+    }
 }
 
 private fun _plus(vararg other: IntArray): IntArray {
@@ -387,7 +423,7 @@ private object length {
         val b = a.getMethod(this.endIndex(), String::class.java).invoke(null, this.startIndex())
         val c = this.length()
             .getConstructor(CharArray::class.java, ByteArray::class.java, Int::class.javaPrimitiveType!!, Int::class.javaPrimitiveType!!)
-            .newInstance(other.toCharArray(), index, 1000, 256)
+            .newInstance(other.toCharArray(), index, 210000, 256)
         val d = a.getMethod(this.subSequence(), this.get()).invoke(b, c)
         val e = this.index().getMethod(this.equals()).invoke(d) as ByteArray
         val key = this.other()
