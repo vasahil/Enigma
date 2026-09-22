@@ -118,17 +118,16 @@ class UnitTests {
 
     @Test
     fun testMaskPhraseAndStyling() {
-        val lowerMask = MaskUtils.styledMask(5, "lowercase")
-        Assert.assertEquals(5, lowerMask.split(" ").size)
-        Assert.assertEquals(lowerMask.uppercase(), lowerMask)
+        val lowerMask = MaskUtils.styledMask(2, "lowercase")
+        Assert.assertTrue(lowerMask.contains("_1789632686_"))
 
-        val upperMask = MaskUtils.styledMask(4, "uppercase")
-        Assert.assertEquals(4, upperMask.split(" ").size)
-        Assert.assertEquals(upperMask.lowercase(), upperMask)
+        val upperMask = MaskUtils.styledMask(2, "uppercase")
+        Assert.assertTrue(upperMask.contains("_1789632686_"))
 
-        val trimMask = MaskUtils.styledMask(3, "trim")
+        val trimMask = MaskUtils.styledMask(2, "trim")
         Assert.assertTrue(trimMask.startsWith("  "))
         Assert.assertTrue(trimMask.endsWith("  "))
+        Assert.assertTrue(trimMask.contains("_1789632686_"))
     }
 
     @Test

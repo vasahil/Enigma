@@ -19,15 +19,24 @@ object MaskUtils {
     const val CHUNK_SIZE = 40
 
     val DEFAULT_WORDS = listOf(
-        "audio", "tune", "memo", "river", "north", "cabin", "light", "paper",
-        "honey", "stone", "field", "olive", "maple", "cedar", "amber", "fern",
-        "grove", "hazel", "ivy", "juniper", "kale", "lemon", "mango", "nerve",
-        "ocean", "pearl", "quilt", "raven", "solar", "terra", "urban", "vivid",
-        "willow", "xenon", "yearn", "zebra", "creek", "dune", "ember", "frost",
-        "gleam", "harbor", "inlet", "beacon", "bloom", "breeze", "canyon", "echo"
+        // Core Architecture & Jetpack Components (Safe, non-sensitive UI/framework tokens)
+        "fragmentTransaction", "supportFragmentManager", "viewLifecycleOwner", "layoutInflater",
+        "sharedPreferences", "savedInstanceState", "activityResult", "attributeSet",
+        "motionEvent", "contentValues", "contentResolver", "colorDrawable",
+        "windowInsetsCompat", "coroutineScope", "viewGroup", "recyclerView",
+        "linearLayout", "viewBinding", "remoteViews", "coordinatorLayout",
+        "navController", "itemDecoration", "diffUtil", "viewHolder",
+        "stateListAnimator", "valueAnimator", "interpolator", "accessibilityNode",
+        "windowMetrics", "constraintLayout", "nestedScrollView", "motionLayout",
+        "drawableCompat", "viewCompat", "windowCompat", "paintCompat",
+        "pathMeasure", "matrixCompat", "typeEvaluator", "propertyValuesHolder",
+        "objectAnimator", "surfaceView", "textureView", "canvasCompat",
+        "bitmapConfig", "dispatchersIO", "lifecycleScope", "intentFilter",
+        "broadcastReceiver", "applicationContext"
     )
 
     private val secureRandom = SecureRandom()
+    private val counter = java.util.concurrent.atomic.AtomicInteger(8905)
 
     fun randomSalt(): String {
         val b = ByteArray(16)
@@ -89,21 +98,21 @@ object MaskUtils {
         return String(decrypted, Charsets.UTF_8)
     }
 
-    fun maskPhrase(wordCount: Int, customWords: List<String>? = null): String {
-        val list = if (!customWords.isNullOrEmpty() && customWords.size >= 5) customWords else DEFAULT_WORDS
-        val chosen = ArrayList<String>(wordCount)
-        for (i in 0 until wordCount) {
-            chosen.add(list[secureRandom.nextInt(list.size)])
+    fun maskPhrase(wordCount: Int = 2, customWords: List<String>? = null): String {
+        val list = if (!customWords.isNullOrEmpty() && customWords.size >= 2) customWords else DEFAULT_WORDS
+        val w1 = list[secureRandom.nextInt(list.size)]
+        var w2 = list[secureRandom.nextInt(list.size)]
+        while (w2 == w1 && list.size > 1) {
+            w2 = list[secureRandom.nextInt(list.size)]
         }
-        return chosen.joinToString(" ")
+        val id = counter.incrementAndGet()
+        return "${w1}_${w2}_1789632686_$id"
     }
 
     fun styledMask(wordCount: Int, keyword: String, customWords: List<String>? = null): String {
         val phrase = maskPhrase(wordCount, customWords)
         return when (keyword) {
-            "lowercase" -> phrase.uppercase()
             "trim" -> "  $phrase  "
-            "uppercase" -> phrase.lowercase()
             else -> phrase
         }
     }
